@@ -1,0 +1,150 @@
+// Kurirani spisak namirnica.
+// nazivSr — ono što korisnik vidi i pretražuje
+// upit    — pojam kojim se traži zapis u USDA bazi
+//
+// Ako uvoz za neku namirnicu ne pronađe dobar zapis, izmeni upit i
+// pokreni skript ponovo — postojeći zapisi se ažuriraju, ne dupliraju.
+
+export type StavkaNamirnice = {
+  nazivSr: string;
+  upit: string;
+};
+
+export const NAMIRNICE: StavkaNamirnice[] = [
+  // ---------------------------------------------------------- meso i riba
+  { nazivSr: "Pileća prsa, sirova", upit: "chicken breast raw boneless skinless" },
+  { nazivSr: "Pileći batak, sirov", upit: "chicken thigh raw meat only" },
+  { nazivSr: "Ćureća prsa, sirova", upit: "turkey breast raw meat only" },
+  { nazivSr: "Junetina, mleveno meso", upit: "ground beef raw 90% lean" },
+  { nazivSr: "Svinjski but, sirov", upit: "pork leg raw lean" },
+  { nazivSr: "Slanina", upit: "bacon raw" },
+  { nazivSr: "Šunka", upit: "ham sliced" },
+  { nazivSr: "Losos, sirov", upit: "salmon atlantic raw" },
+  { nazivSr: "Tunjevina u sopstvenom soku", upit: "tuna canned water drained" },
+  { nazivSr: "Oslić, sirov", upit: "hake raw" },
+  { nazivSr: "Skuša", upit: "mackerel raw" },
+  { nazivSr: "Škampi", upit: "shrimp raw" },
+
+  // ---------------------------------------------------------- jaja i mlečno
+  { nazivSr: "Jaje, celo", upit: "egg whole raw fresh" },
+  { nazivSr: "Belance", upit: "egg white raw fresh" },
+  { nazivSr: "Mleko 2,8%", upit: "milk whole 3.25% fat" },
+  { nazivSr: "Mleko 1,6%", upit: "milk reduced fat 2%" },
+  { nazivSr: "Jogurt", upit: "yogurt plain whole milk" },
+  { nazivSr: "Grčki jogurt", upit: "yogurt greek plain nonfat" },
+  { nazivSr: "Kiselo mleko", upit: "buttermilk fluid" },
+  { nazivSr: "Sir, mladi", upit: "cheese cottage lowfat" },
+  { nazivSr: "Sir, gauda", upit: "cheese gouda" },
+  { nazivSr: "Mocarela", upit: "cheese mozzarella part skim" },
+  { nazivSr: "Feta sir", upit: "cheese feta" },
+  { nazivSr: "Parmezan", upit: "cheese parmesan grated" },
+  { nazivSr: "Pavlaka za kuvanje", upit: "cream heavy whipping" },
+  { nazivSr: "Kisela pavlaka", upit: "sour cream" },
+  { nazivSr: "Puter", upit: "butter salted" },
+  { nazivSr: "Krem sir", upit: "cheese cream" },
+
+  // ---------------------------------------------------------- žitarice
+  { nazivSr: "Pirinač, beli, kuvan", upit: "rice white cooked" },
+  { nazivSr: "Pirinač, integralni, kuvan", upit: "rice brown cooked" },
+  { nazivSr: "Ovsene pahuljice", upit: "oats raw" },
+  { nazivSr: "Testenina, kuvana", upit: "pasta cooked enriched" },
+  { nazivSr: "Integralna testenina, kuvana", upit: "pasta whole wheat cooked" },
+  { nazivSr: "Heljda, kuvana", upit: "buckwheat groats cooked" },
+  { nazivSr: "Kinoa, kuvana", upit: "quinoa cooked" },
+  { nazivSr: "Kus-kus, kuvan", upit: "couscous cooked" },
+  { nazivSr: "Bulgur, kuvan", upit: "bulgur cooked" },
+  { nazivSr: "Hleb, beli", upit: "bread white commercially prepared" },
+  { nazivSr: "Hleb, integralni", upit: "bread whole wheat commercially prepared" },
+  { nazivSr: "Brašno, pšenično belo", upit: "wheat flour white all-purpose enriched" },
+  { nazivSr: "Brašno, integralno", upit: "wheat flour whole grain" },
+  { nazivSr: "Kukuruzno brašno", upit: "corn flour whole grain yellow" },
+  { nazivSr: "Prezle", upit: "bread crumbs dry grated plain" },
+  { nazivSr: "Tortilja, pšenična", upit: "tortillas flour wheat" },
+
+  // ---------------------------------------------------------- mahunarke
+  { nazivSr: "Pasulj, beli, kuvan", upit: "beans white cooked boiled" },
+  { nazivSr: "Crveni pasulj, kuvan", upit: "kidney beans red cooked boiled" },
+  { nazivSr: "Leblebije, kuvane", upit: "chickpeas cooked boiled" },
+  { nazivSr: "Sočivo, kuvano", upit: "lentils cooked boiled" },
+  { nazivSr: "Boranija", upit: "green beans raw" },
+  { nazivSr: "Grašak", upit: "peas green raw" },
+  { nazivSr: "Soja, zrno", upit: "soybeans mature cooked" },
+  { nazivSr: "Tofu", upit: "tofu firm" },
+
+  // ---------------------------------------------------------- povrće
+  { nazivSr: "Krompir, sirov", upit: "potato raw flesh and skin" },
+  { nazivSr: "Batat, sirov", upit: "sweet potato raw" },
+  { nazivSr: "Paradajz", upit: "tomato red ripe raw" },
+  { nazivSr: "Paradajz pelat", upit: "tomatoes canned" },
+  { nazivSr: "Paprika, crvena", upit: "peppers sweet red raw" },
+  { nazivSr: "Krastavac", upit: "cucumber with peel raw" },
+  { nazivSr: "Zelena salata", upit: "lettuce green leaf raw" },
+  { nazivSr: "Spanać", upit: "spinach raw" },
+  { nazivSr: "Blitva", upit: "swiss chard raw" },
+  { nazivSr: "Kupus", upit: "cabbage raw" },
+  { nazivSr: "Karfiol", upit: "cauliflower raw" },
+  { nazivSr: "Brokoli", upit: "broccoli raw" },
+  { nazivSr: "Šargarepa", upit: "carrots raw" },
+  { nazivSr: "Crni luk", upit: "onions raw" },
+  { nazivSr: "Beli luk", upit: "garlic raw" },
+  { nazivSr: "Praziluk", upit: "leeks raw" },
+  { nazivSr: "Tikvice", upit: "squash zucchini raw" },
+  { nazivSr: "Plavi patlidžan", upit: "eggplant raw" },
+  { nazivSr: "Pečurke, šampinjoni", upit: "mushrooms white raw" },
+  { nazivSr: "Kukuruz šećerac", upit: "corn sweet yellow raw" },
+  { nazivSr: "Cvekla", upit: "beets raw" },
+  { nazivSr: "Avokado", upit: "avocado raw" },
+  { nazivSr: "Maslinke", upit: "olives ripe canned" },
+
+  // ---------------------------------------------------------- voće
+  { nazivSr: "Jabuka", upit: "apples raw with skin" },
+  { nazivSr: "Banana", upit: "bananas raw" },
+  { nazivSr: "Pomorandža", upit: "oranges raw" },
+  { nazivSr: "Limun", upit: "lemons raw without peel" },
+  { nazivSr: "Jagode", upit: "strawberries raw" },
+  { nazivSr: "Borovnice", upit: "blueberries raw" },
+  { nazivSr: "Maline", upit: "raspberries raw" },
+  { nazivSr: "Grožđe", upit: "grapes red or green raw" },
+  { nazivSr: "Kruška", upit: "pears raw" },
+  { nazivSr: "Breskva", upit: "peaches raw" },
+  { nazivSr: "Kajsija", upit: "apricots raw" },
+  { nazivSr: "Šljiva", upit: "plums raw" },
+  { nazivSr: "Lubenica", upit: "watermelon raw" },
+  { nazivSr: "Dinja", upit: "melons cantaloupe raw" },
+  { nazivSr: "Ananas", upit: "pineapple raw" },
+  { nazivSr: "Kivi", upit: "kiwifruit green raw" },
+  { nazivSr: "Urme", upit: "dates medjool" },
+  { nazivSr: "Suvo grožđe", upit: "raisins seedless" },
+
+  // ---------------------------------------------------------- orašasti plodovi
+  { nazivSr: "Badem", upit: "almonds raw" },
+  { nazivSr: "Orah", upit: "walnuts english" },
+  { nazivSr: "Lešnik", upit: "hazelnuts raw" },
+  { nazivSr: "Indijski orah", upit: "cashew nuts raw" },
+  { nazivSr: "Kikiriki", upit: "peanuts all types raw" },
+  { nazivSr: "Puter od kikirikija", upit: "peanut butter smooth" },
+  { nazivSr: "Semenke suncokreta", upit: "sunflower seed kernels dried" },
+  { nazivSr: "Semenke bundeve", upit: "pumpkin seeds raw" },
+  { nazivSr: "Čia semenke", upit: "chia seeds dried" },
+  { nazivSr: "Lan, semenke", upit: "flaxseed" },
+
+  // ---------------------------------------------------------- masti i ostalo
+  { nazivSr: "Maslinovo ulje", upit: "olive oil salad or cooking" },
+  { nazivSr: "Suncokretovo ulje", upit: "sunflower oil" },
+  { nazivSr: "Kokosovo ulje", upit: "coconut oil" },
+  { nazivSr: "Med", upit: "honey" },
+  { nazivSr: "Šećer, beli", upit: "sugars granulated" },
+  { nazivSr: "Kakao u prahu", upit: "cocoa dry powder unsweetened" },
+  { nazivSr: "Tamna čokolada", upit: "chocolate dark 70-85% cacao" },
+  { nazivSr: "So", upit: "salt table" },
+  { nazivSr: "Biber", upit: "spices pepper black" },
+  { nazivSr: "Aleva paprika", upit: "spices paprika" },
+  { nazivSr: "Origano", upit: "spices oregano dried" },
+  { nazivSr: "Cimet", upit: "spices cinnamon ground" },
+  { nazivSr: "Senf", upit: "mustard prepared yellow" },
+  { nazivSr: "Kečap", upit: "catsup" },
+  { nazivSr: "Majonez", upit: "mayonnaise regular" },
+  { nazivSr: "Sirće, jabukovo", upit: "vinegar cider" },
+  { nazivSr: "Sojin sos", upit: "soy sauce made from soy and wheat" },
+  { nazivSr: "Protein u prahu, surutka", upit: "whey protein powder" },
+];
