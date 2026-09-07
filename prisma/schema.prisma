@@ -1,0 +1,181 @@
+// Šema baze podataka — odgovara ER modelu iz poglavlja 4.2
+// Nazivi modela su na engleskom jer prate konvencije koda;
+// preslikavanje na konceptualne nazive iz rada dato je u README dokumentu.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [vector]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ---------------------------------------------------------------- korisnik
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  recipes  Recipe[]
+  saved    SavedRecipe[]
+  ratings  Rating[]
+  comments Comment[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------- namirnica
+
+model Ingredient {
+  id   String @id @default(uuid())
+  name String
+
+  // odakle zapis potiče i pod kojom oznakom (poglavlje 4.2)
+  source   String // npr. "USDA_FDC"
+  sourceId String @map("source_id")
+
+  kcalPer100g    Decimal @map("kcal_per_100g") @db.Decimal(7, 2)
+  proteinPer100g Decimal @map("protein_per_100g") @db.Decimal(6, 2)
+  carbsPer100g   Decimal @map("carbs_per_100g") @db.Decimal(6, 2)
+  fatPer100g     Decimal @map("fat_per_100g") @db.Decimal(6, 2)
+
+  // kada je zapis poslednji put preuzet iz izvora (NFZ-6)
+  refreshedAt DateTime @default(now()) @map("refreshed_at")
+
+  recipeIngredients RecipeIngredient[]
+
+  @@unique([source, sourceId])
+  @@index([name])
+  @@map("ingredients")
+}
+
+// ---------------------------------------------------------------- recept
+
+model Recipe {
+  id           String @id @default(uuid())
+  authorId     String @map("author_id")
+  title        String
+  description  String
+  instructions String
+  imageUrl     String? @map("image_url")
+  servings     Int
+
+  // izvedene vrednosti — namerna denormalizacija (poglavlje 4.2)
+  kcalPerServing    Decimal @map("kcal_per_serving") @db.Decimal(8, 2)
+  proteinPerServing Decimal @map("protein_per_serving") @db.Decimal(7, 2)
+  carbsPerServing   Decimal @map("carbs_per_serving") @db.Decimal(7, 2)
+  fatPerServing     Decimal @map("fat_per_serving") @db.Decimal(7, 2)
+
+  // vektorska reprezentacija — Prisma nema izvorni tip, kolona se
+  // kreira migracijom i čita preko $queryRaw
+  embedding Unsupported("vector(1536)")?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  author      User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  ingredients RecipeIngredient[]
+  tags        RecipeTag[]
+  savedBy     SavedRecipe[]
+  ratings     Rating[]
+  comments    Comment[]
+
+  @@index([kcalPerServing])
+  @@index([proteinPerServing])
+  @@index([createdAt])
+  @@map("recipes")
+}
+
+// ------------------------------------------- vezna tabela: recept ↔ namirnica
+
+model RecipeIngredient {
+  recipeId     String  @map("recipe_id")
+  ingredientId String  @map("ingredient_id")
+  amountGrams  Decimal @map("amount_grams") @db.Decimal(8, 2)
+  position     Int
+
+  recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  @@id([recipeId, ingredientId])
+  @@map("recipe_ingredients")
+}
+
+// ---------------------------------------------------------------- oznaka
+
+model Tag {
+  id      String      @id @default(uuid())
+  name    String      @unique
+  recipes RecipeTag[]
+
+  @@map("tags")
+}
+
+model RecipeTag {
+  recipeId String @map("recipe_id")
+  tagId    String @map("tag_id")
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, tagId])
+  @@map("recipe_tags")
+}
+
+// ---------------------------------------------------------------- sačuvan recept
+
+model SavedRecipe {
+  userId    String   @map("user_id")
+  recipeId  String   @map("recipe_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, recipeId])
+  @@map("saved_recipes")
+}
+
+// ---------------------------------------------------------------- ocena
+
+model Rating {
+  userId    String   @map("user_id")
+  recipeId  String   @map("recipe_id")
+  value     Int // ograničenje 1–5 postavlja se migracijom
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, recipeId])
+  @@map("ratings")
+}
+
+// ---------------------------------------------------------------- komentar
+
+model Comment {
+  id        String   @id @default(uuid())
+  recipeId  String   @map("recipe_id")
+  authorId  String   @map("author_id")
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId])
+  @@map("comments")
+}
