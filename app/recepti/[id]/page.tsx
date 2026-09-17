@@ -2,7 +2,10 @@ import { notFound } from "next/navigation";
 import { ucitajRecept } from "@/lib/recepti";
 import { trenutniKorisnik } from "@/lib/auth";
 import DugmeBrisanja from "@/components/DugmeBrisanja";
-
+import Ocenjivanje from "@/components/Ocenjivanje";
+import Komentari from "@/components/Komentari";
+import DugmeCuvanja from "@/components/DugmeCuvanja";
+import IzmenaFotografije from "@/components/IzmenaFotografije";
 /**
  * Страна за приказ рецепта (слика 4.4).
  *
@@ -49,12 +52,12 @@ export default async function StranaRecepta({
             {recept.datumKreiranja.toLocaleDateString("sr-RS")}
           </p>
 
-          {recept.prosecnaOcena !== null && (
-            <p className="mt-2 text-sm">
-              Prosečna ocena: {recept.prosecnaOcena.toFixed(1)} ({recept.brojOcena})
-            </p>
-          )}
-
+          <div className="mt-3">
+            <Ocenjivanje receptId={recept.id} prijavljen={!!korisnik} />
+          </div>
+	  <div className="mt-4">
+  	    <DugmeCuvanja receptId={recept.id} prijavljen={!!korisnik} />
+	  </div>
           {recept.oznake.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {recept.oznake.map((o) => (
@@ -70,8 +73,12 @@ export default async function StranaRecepta({
 
           <p className="mt-4 text-neutral-300">{recept.opis}</p>
 
-          {smeDaBrise && (
-            <div className="mt-6">
+                    {smeDaBrise && (
+            <div className="mt-6 space-y-3">
+              <IzmenaFotografije
+                receptId={recept.id}
+                postojecaSlika={recept.urlSlike}
+              />
               <DugmeBrisanja receptId={recept.id} />
             </div>
           )}
@@ -125,6 +132,7 @@ export default async function StranaRecepta({
         Prikazane vrednosti su informativnog karaktera i ne predstavljaju zamenu
         za savet stručnjaka za ishranu.
       </p>
+      <Komentari receptId={recept.id} prijavljen={!!korisnik} />
     </article>
   );
 }

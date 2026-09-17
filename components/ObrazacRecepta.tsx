@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import OtpremanjeSlike from "@/components/OtpremanjeSlike";
 
 /**
  * Obrazac za unos recepta (slika 4.5).
@@ -25,18 +26,18 @@ type Namirnica = {
   mastiNa100g: number;
 };
 
-type IzabranaNamirnica = Namirnica & { kolicinaG: number };
+type IzabranaNamirnica = Namirnica & { kolicinaG: number | "" };
 
 const KASNJENJE_PRETRAGE = 300; // ms
 const PODRAZUMEVANA_KOLICINA = 100;
 
 export default function ObrazacRecepta() {
   const ruter = useRouter();
-
+  const tajmer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [naslov, postaviNaslov] = useState("");
   const [opis, postaviOpis] = useState("");
   const [postupak, postaviPostupak] = useState("");
-  const [brojPorcija, postaviBrojPorcija] = useState(2);
+  
   const [oznake, postaviOznake] = useState<string[]>([]);
   const [unosOznake, postaviUnosOznake] = useState("");
 
@@ -50,8 +51,9 @@ export default function ObrazacRecepta() {
   const [greska, postaviGresku] = useState<string | null>(null);
   const [greskePolja, postaviGreskePolja] = useState<Record<string, string[]>>({});
 
-  const tajmer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  
+  const [urlSlike, postaviUrlSlike] = useState<string | null>(null);
+  const [brojPorcija, postaviBrojPorcija] = useState<number | "">(2);
   // --------------------------------------------------------- pretraga
   useEffect(() => {
     if (tajmer.current) clearTimeout(tajmer.current);
@@ -91,9 +93,10 @@ export default function ObrazacRecepta() {
     postaviRezultate([]);
   }
 
-  function izmeniKolicinu(id: string, kolicina: number) {
+    function izmeniKolicinu(id: string, unos: string) {
+    const vrednost = unos === "" ? "" : Number(unos);
     postaviIzabrane(
-      izabrane.map((i) => (i.id === id ? { ...i, kolicinaG: kolicina } : i))
+      izabrane.map((i) => (i.id === id ? { ...i, kolicinaG: vrednost } : i))
     );
   }
 
@@ -112,7 +115,7 @@ export default function ObrazacRecepta() {
   // --------------------------------------------------------- obračun
   const ukupno = izabrane.reduce(
     (zbir, n) => {
-      const cinilac = n.kolicinaG / 100;
+      const cinilac = (Number(n.kolicinaG) || 0) / 100;
       return {
         kcal: zbir.kcal + n.kcalNa100g * cinilac,
         proteini: zbir.proteini + n.proteiniNa100g * cinilac,
@@ -123,7 +126,8 @@ export default function ObrazacRecepta() {
     { kcal: 0, proteini: 0, uh: 0, masti: 0 }
   );
 
-  const porcije = brojPorcija > 0 ? brojPorcija : 1;
+  const porcije = Number(brojPorcija) > 0 ? Number(brojPorcija) : 1;
+  const svePopunjene = izabrane.every((n) => Number(n.kolicinaG) > 0);
 
   // --------------------------------------------------------- slanje
   async function posalji(dogadjaj: React.FormEvent) {
@@ -139,12 +143,13 @@ export default function ObrazacRecepta() {
         body: JSON.stringify({
           naslov,
           opis,
+          urlSlike,
           postupakPripreme: postupak,
-          brojPorcija,
+	  brojPorcija: Number(brojPorcija) || 1,
           oznake,
           sastav: izabrane.map((n) => ({
             namirnicaId: n.id,
-            kolicinaG: n.kolicinaG,
+            kolicinaG: Number(n.kolicinaG) || 0,
           })),
         }),
       });
@@ -216,7 +221,7 @@ export default function ObrazacRecepta() {
                 min={1}
                 max={50}
                 value={brojPorcija}
-                onChange={(e) => postaviBrojPorcija(Number(e.target.value))}
+                onChange={(e) => postaviBrojPorcija(e.target.value === "" ? "" : Number(e.target.value))}
                 required
                 className="w-full rounded border border-neutral-600 bg-transparent px-3 py-2"
               />
@@ -333,9 +338,7 @@ export default function ObrazacRecepta() {
                         min={1}
                         max={5000}
                         value={n.kolicinaG}
-                        onChange={(e) =>
-                          izmeniKolicinu(n.id, Number(e.target.value))
-                        }
+                        onChange={(e) => izmeniKolicinu(n.id, e.target.value)}
                         className="w-20 rounded border border-neutral-600 bg-transparent px-2 py-1 text-right"
                       />
                       <span className="text-sm text-neutral-400">g</span>
@@ -395,10 +398,10 @@ export default function ObrazacRecepta() {
               {greska}
             </p>
           )}
-
+	  <OtpremanjeSlike urlSlike={urlSlike} postaviUrl={postaviUrlSlike} />
           <button
             type="submit"
-            disabled={slanje || izabrane.length === 0}
+            disabled={slanje || izabrane.length === 0 || !svePopunjene}
             className="w-full rounded bg-neutral-200 px-4 py-3 font-medium text-neutral-900 disabled:opacity-40"
           >
             {slanje ? "Čuvanje..." : "Sačuvaj recept"}

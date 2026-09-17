@@ -6,7 +6,7 @@ import { obracunajZaRecept } from "@/lib/obracun";
 import { GreskaObracuna } from "@/lib/nutricija";
 import { semaRecepta, semaFiltera } from "@/lib/validacija";
 import { uspeh, greska, neovlascen } from "@/lib/odgovori";
-
+import { sacuvajVektorRecepta } from "@/lib/pretraga";
 const PO_STRANI = 12;
 
 /**
@@ -88,6 +88,17 @@ export async function POST(zahtev: NextRequest) {
     },
     select: { id: true, title: true, kcalPerServing: true },
   });
+
+// Вектор се генерише након чувања. Неуспех генерисања не поништава
+  // чување рецепта — рецепт остаје употребљив, само привремено није
+  // обухваћен семантичком претрагом.
+try {
+    await sacuvajVektorRecepta(recept.id);
+  } catch (g) {
+    console.error("Generisanje vektora nije uspelo:", g);
+  }
+
+
 
   return uspeh(
     {

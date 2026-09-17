@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
     "@prisma/client": "6.19.3",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.12",

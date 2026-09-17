@@ -22,7 +22,10 @@ export default async function Navigacija() {
         <Link href="/" className="text-sm text-neutral-300">
           Recepti
         </Link>
-
+	
+	<Link href="/pretraga" className="text-sm text-neutral-300">
+  	  Pretraga po namirnicama
+	</Link>
         {korisnik && (
           <Link href="/recepti/novi" className="text-sm text-neutral-300">
             Novi recept
@@ -32,9 +35,9 @@ export default async function Navigacija() {
         <div className="ml-auto flex items-center gap-4">
           {korisnik ? (
             <>
-              <span className="text-sm text-neutral-400">
-                {korisnik.username}
-              </span>
+              <Link href="/profil" className="text-sm text-neutral-300">
+  		{korisnik.username}
+	      </Link>
               <form action={odjavi}>
                 <button
                   type="submit"

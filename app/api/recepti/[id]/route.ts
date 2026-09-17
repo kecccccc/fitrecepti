@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { trenutniKorisnik } from "@/lib/auth";
 import { ucitajRecept } from "@/lib/recepti";
 import { uspeh, greska, neovlascen, zabranjeno, nijePronadjeno } from "@/lib/odgovori";
+import { z } from "zod";
 
 /**
  * GET    /api/recepti/[id]   Приказ рецепта
@@ -48,4 +49,53 @@ export async function DELETE(
   await prisma.recipe.delete({ where: { id } });
 
   return uspeh({ obrisano: true });
+}
+
+const semaIzmene = z.object({
+  urlSlike: z.string().url("Неисправна адреса слике.").nullable(),
+});
+
+export async function PATCH(
+  zahtev: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const korisnik = await trenutniKorisnik();
+  if (!korisnik) return neovlascen();
+
+  const { id } = await params;
+
+  const recept = await prisma.recipe.findUnique({
+    where: { id },
+    select: { authorId: true },
+  });
+
+  if (!recept) return nijePronadjeno("Рецепт");
+
+  const sopstveni = recept.authorId === korisnik.id;
+  const administrator = korisnik.role === "ADMIN";
+
+  if (!sopstveni && !administrator) return zabranjeno();
+
+  let telo: unknown;
+  try {
+    telo = await zahtev.json();
+  } catch {
+    return greska("Тело захтева није исправан JSON.", 400);
+  }
+
+  const provera = semaIzmene.safeParse(telo);
+  if (!provera.success) {
+    return greska(
+      "Унети подаци нису исправни.",
+      400,
+      provera.error.flatten().fieldErrors as Record<string, string[]>
+    );
+  }
+
+  await prisma.recipe.update({
+    where: { id },
+    data: { imageUrl: provera.data.urlSlike },
+  });
+
+  return uspeh({ urlSlike: provera.data.urlSlike });
 }
